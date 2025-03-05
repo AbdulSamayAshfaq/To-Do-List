@@ -2,16 +2,29 @@ import streamlit as st
 from streamlit_extras.stylable_container import stylable_container
 import json
 
-# App title
-st.title("📝 Enhanced To-Do List App")
+# Load tasks from file
+def load_tasks():
+    try:
+        with open("tasks.json", "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return []
+
+# Save tasks to file
+def save_tasks():
+    with open("tasks.json", "w") as f:
+        json.dump(st.session_state.tasks, f)
 
 # Initialize session state for tasks
 if "tasks" not in st.session_state:
-    st.session_state.tasks = []
+    st.session_state.tasks = load_tasks()
 if "show_completed" not in st.session_state:
     st.session_state.show_completed = True
 if "editing_index" not in st.session_state:
     st.session_state.editing_index = None
+
+# App title
+st.title("📝 Enhanced To-Do List App")
 
 # Sidebar for adding tasks
 st.sidebar.header("📌 Manage Your Tasks")
@@ -21,6 +34,7 @@ priority = st.sidebar.selectbox("Priority", ["Low", "Medium", "High"], index=1)
 def add_task():
     if new_task.strip():
         st.session_state.tasks.append({"task": new_task, "completed": False, "priority": priority})
+        save_tasks()
         st.sidebar.success("✅ Task added successfully!")
     else:
         st.sidebar.warning("⚠️ Task cannot be empty!")
@@ -43,6 +57,7 @@ completed_tasks = [task for task in st.session_state.tasks if task["completed"]]
 def save_edit(index, new_task_value, new_priority):
     st.session_state.tasks[index]["task"] = new_task_value
     st.session_state.tasks[index]["priority"] = new_priority
+    save_tasks()
     st.session_state.editing_index = None
     st.rerun()
 
@@ -54,10 +69,10 @@ else:
             col1, col2, col3, col4 = st.columns([0.6, 0.1, 0.15, 0.15])
             
             # Mark task as complete
-            completed = col1.checkbox(f"**{task['task']}** ({task['priority']})", task["completed"], key=f"check_{index}")
-            if completed:
+            if col1.checkbox(f"**{task['task']}** ({task['priority']})", task["completed"], key=f"check_{index}"):
                 st.session_state.tasks[index]["completed"] = True
-                st.success(f"✅ Task '{task['task']}' marked as completed!")
+                save_tasks()
+                st.success(f"✅ Task '{task['task']}' marked as completed and removed from active list!")
                 st.rerun()
             
             # Edit task
@@ -69,6 +84,7 @@ else:
             if col3.button("❌", key=f"delete_{index}"):
                 deleted_task = st.session_state.tasks[index]["task"]
                 del st.session_state.tasks[index]
+                save_tasks()
                 st.warning(f"🗑️ Task '{deleted_task}' deleted!")
                 st.rerun()
 
@@ -93,12 +109,14 @@ if st.session_state.show_completed:
                 # Mark completed task as incomplete
                 if col2.button("🔄", key=f"restore_{index}"):
                     st.session_state.tasks[index]["completed"] = False
+                    save_tasks()
                     st.info(f"🔄 Task '{task['task']}' moved back to active list!")
                     st.rerun()
                 
                 # Delete completed task
                 if col3.button("🗑️", key=f"delete_completed_{index}"):
                     st.session_state.tasks.remove(task)
+                    save_tasks()
                     st.warning(f"🗑️ Completed task '{task['task']}' deleted!")
                     st.rerun()
     else:
@@ -106,17 +124,15 @@ if st.session_state.show_completed:
 
 # Save all tasks
 if st.button("💾 Save All Tasks"):
-    with open("tasks.json", "w") as f:
-        json.dump(st.session_state.tasks, f)
-    st.session_state.tasks = []  # Clear all tasks after saving
+    save_tasks()
     st.success("💾 All tasks saved successfully!")
-    st.rerun()
 
 # Clear all tasks
 if st.button("🗑️ Clear All Tasks"):
     st.session_state.tasks = []
+    save_tasks()
     st.success("🧹 All tasks deleted successfully!")
 
 # Footer
 st.markdown('---')
-st.caption("🚀 Stay organized & productive with this enhanced to-do list app.")
+st.caption("🚀 Stay organized & productive with this enhanced to-do list app..")
