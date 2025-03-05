@@ -24,7 +24,7 @@ if "editing_index" not in st.session_state:
     st.session_state.editing_index = None
 
 # App title
-st.title("📝 Enhanced To-Do List App")
+st.title("📝 To-Do List App")
 
 # Sidebar for adding tasks
 st.sidebar.header("📌 Manage Your Tasks")
