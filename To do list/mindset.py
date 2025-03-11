@@ -135,4 +135,4 @@ if st.button("🗑️ Clear All Tasks"):
 
 # Footer
 st.markdown('---')
-st.caption("🚀 Stay organized & productive with this enhanced to-do list app..")
+st.caption("🚀 Stay organized & productive with this enhanced to-do list app Made by Abdul samay..")
